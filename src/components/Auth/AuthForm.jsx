@@ -13,20 +13,36 @@ export default function AuthForm() {
 
   const prettyRole = role === "tutor" ? "Tutor" : "Student";
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    // validate tối thiểu
     if (!username || !password) {
-      setError("Vui lòng nhập đầy đủ Username và Password.");
+      setError(
+        "⚠️The credentials you provided cannot be determined to be authentic."
+      );
       return;
     }
 
-    // TODO: gọi API/CAS thật ở đây
-    // giả lập login OK => điều hướng theo role
-    if (role === "tutor") navigate("/tutor");
-    else navigate("/student");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, role }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(
+          "⚠️The credentials you provided cannot be determined to be authentic."
+        );
+        return;
+      }
+
+      role === "tutor" ? navigate("/tutor") : navigate("/student");
+    } catch {
+      setError("⚠️Cannot connect to authentication server.");
+    }
   };
 
   const onClear = () => {
@@ -101,6 +117,7 @@ export default function AuthForm() {
         </form>
 
         <div className="auth-footer">
+          <a href="#">Forgot password?</a>
           <a href="#">Change password?</a>
           <div className="split" />
           <a href="mailto:support@hcmut.edu.vn">support@hcmut.edu.vn</a>
